@@ -66,3 +66,79 @@ Este projeto é uma API desenvolvida com FastAPI para gerenciar alunos, cursos e
 - Para reiniciar o banco, basta apagar o arquivo `escola.db` (isso apagará todos os dados).
 
 ---
+
+# Alterações realizadas
+
+## Containerização com Docker e CI
+
+O projeto foi atualizado para incluir suporte a Docker e um fluxo de Integração Contínua (CI) básico com GitHub Actions.
+
+### Docker
+
+- **`Dockerfile`**: Define o ambiente para a aplicação, criando uma imagem Docker com Python e todas as dependências necessárias.
+- **`.dockerignore`**: Garante que arquivos desnecessários (como o ambiente virtual `venv`) não sejam incluídos na imagem Docker, mantendo-a leve.
+
+**Para construir e executar com Docker:**
+```sh
+# Construir a imagem
+docker build -t imersao-devops-app .
+
+# Executar o container
+docker run -p 8000:8000 imersao-devops-app
+```
+
+### Docker Compose
+
+- **`docker-compose.yml`**: Orquestra a execução do container da aplicação para facilitar o ambiente de desenvolvimento. Ele utiliza o `Dockerfile` para construir a imagem e monta o código-fonte local dentro do container, permitindo que alterações no código sejam refletidas em tempo real.
+
+**Para executar com Docker Compose:**
+```sh
+docker compose up
+```
+
+### Integração Contínua (CI)
+
+- **`.github/workflows/docker-image.yml`**: Define um workflow de GitHub Actions que é acionado a cada `push` ou `pull request` na branch `main`. A principal função deste workflow é construir a imagem Docker para garantir que ela continua funcional após novas alterações.
+
+
+### Deploy no Google Cloud
+
+#### 1. Autenticação
+
+Autentique-se com sua conta do Google Cloud:
+```sh
+gcloud auth login
+```
+
+#### 2. Configurar o Projeto
+
+Defina o projeto do Google Cloud que você deseja usar (substitua `PROJECT_ID` pelo ID do seu projeto):
+```sh
+gcloud config set project PROJECT_ID
+```
+
+#### 3. Realizar o Deploy
+Para fazer o deploy da aplicação no Cloud Run a partir do código-fonte local, use o comando:
+```sh
+gcloud run deploy imersao-devops-app --source . --port 8000
+```
+
+**Parâmetros do comando:**
+- `imersao-devops-app`: Nome do serviço que será criado no Cloud Run
+- `--source .`: Define que o deploy será feito a partir da pasta atual (use `--source` seguido do caminho se for outro diretório)
+- `--port 8000`: Porta na qual a aplicação será executada
+
+Ao executar o comando acima pela primeira vez, o gcloud fará algumas perguntas interativas para configurar o ambiente:
+
+1. **Habilitar APIs**: Ele pedirá para habilitar as APIs do Artifact Registry e do Cloud Build. Digite **y** (sim).
+   - **Artifact Registry**: Armazena a imagem Docker criada
+   - **Cloud Build**: Realiza o processo de build da imagem
+   - **Cloud Run**: Executa a aplicação containerizada
+
+2. **Região do Deploy**: Escolha a região onde sua aplicação será hospedada. Selecione **southamerica-east1** para hospedar no Brasil.
+
+3. **Criar Artifact Registry**: Perguntará se deseja criar um repositório no Artifact Registry para armazenar a imagem. Digite **y** (sim).
+
+4. **Acesso não autenticado**: Para permitir que a API seja acessível publicamente sem necessidade de autenticação, digite **y** (sim) quando perguntado sobre "allow unauthenticated invocations".
+
+O Google Cloud Build irá automaticamente construir a imagem Docker usando seu Dockerfile, enviá-la para o Artifact Registry e, em seguida, fazer o deploy no Cloud Run.
